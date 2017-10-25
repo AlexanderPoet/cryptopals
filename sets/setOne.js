@@ -13,7 +13,7 @@ const fixedXOR = string => {
     for (const key of b.keys()) {
       buf[key] = a[key] ^ b[key];
     }
-    return buf;
+    return buf.toString(); // made to return string for easy testing
   }
 }
 
@@ -61,7 +61,7 @@ const singleByteXOR = string => {
     if (mostPopular[max.code]){ // terrible filter
       if (allEnglish(_string)) {
         finalists.push({
-          char: String.fromCharCode(max.code),
+          char: String.fromCharCode(code),
           string: _string,
           count: max.count,
           spaces: spy[32]

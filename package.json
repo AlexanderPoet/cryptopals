@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/AlexanderPoet/cryptopals#readme",
   "dependencies": {
-    "bluebird": "^3.5.1"
+    "bluebird": "^3.5.1",
+    "jest": "^21.2.1"
   }
 }

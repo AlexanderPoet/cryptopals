@@ -1,1 +1,1 @@
-module.exports.setOne = require('./setOne');
+module.exports.setOne = require('./setOne.js');
