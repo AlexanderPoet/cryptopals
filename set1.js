@@ -4,35 +4,19 @@ const readFileAsync = Promise.promisify(require('fs').readFile);
 
 const hexTo64 = string => Buffer.from(string, 'hex').toString('base64');
 
-const fixedXOR = (string) => {
+const fixedXOR = string => {
   let a = Buffer.from(string, 'hex');
   return (string) => {
     let b = Buffer.from(string, 'hex');
     const buf = Buffer.alloc(b.length);
-    console.log(b)
-    console.log(a)
     for (const key of b.keys()) {
-      //console.log(a[key], b[key]);
       buf[key] = a[key] ^ b[key];
-      
     }
     return buf;
   }
 }
 
-const finalFilterCheck = str => {
-  let containsAllEnglish = true;
-  for (let i = 0; i < str.length; i++) {
-    let cc = str[i].charCodeAt(0);
-    containsAllEnglish = (31 < cc && cc < 127) || cc === 10; // LF bug
-    if (!containsAllEnglish) {
-        return false;
-    }
-  }
-  return true;
-};
-
-const sbXOR = string => { // a single english character to be more specific
+const singleByteXOR = string => {
   const finalists = [];
   const mostPopular = {
     101: 1,
@@ -47,10 +31,12 @@ const sbXOR = string => { // a single english character to be more specific
     99: 10,
     100: 11
   }
-  
+
+  let finalChoice;
   let length;
   let _string;
-  for (let code = 0; code < 257; code++) {//127
+
+  for (let code = 0; code < 257; code++) {
     const buf = Buffer.from(string, 'hex');
     const max = { code: 0, count: 0 };
     let spy = [];
@@ -62,7 +48,7 @@ const sbXOR = string => { // a single english character to be more specific
     }
     _string = buf.toString();
 
-    spy = spy.reduce((rec, val, index) => {
+    spy = spy.reduce((rec, val, index) => { // count occurences of chars
       rec[val] = rec[val] ? rec[val] + 1 : 1;
       if (max.count < rec[val] && val !== 32) {
         max.code = val;
@@ -72,13 +58,17 @@ const sbXOR = string => { // a single english character to be more specific
     },{});
     
     if (mostPopular[max.code]){ // terrible filter
-      if (finalFilterCheck(_string)) {
-        finalists.push({ char: String.fromCharCode(max.code), string: _string, count: max.count, spaces: spy[32]});// human version
+      if (allEnglish(_string)) {
+        finalists.push({
+          char: String.fromCharCode(max.code),
+          string: _string,
+          count: max.count,
+          spaces: spy[32]
+        });
       }
     }
   }
 
-  let finalChoice;
   finalists.forEach(finalist => {
     if (!finalChoice) {
       finalChoice = finalist;
@@ -94,17 +84,28 @@ const detectSingleCharXOR = (filepath='test.txt') =>
   .then(data =>
     data.toString()
     .split('\n')
-    .map(sbXOR)
-    .filter(ele => ele.spaces)[0].string
+    .map(singleByteXOR)
+    .filter(ele => ele.spaces)[0]
   )
   .catch(err => console.log('Errorrrr,', err));
 ;
 
-detectSingleCharXOR().then(secret => console.log(secret))
+const allEnglish = str => {
+  let containsAllEnglish = true;
+  for (let i = 0; i < str.length; i++) {
+    let cc = str[i].charCodeAt(0);
+    containsAllEnglish = (31 < cc && cc < 127) || cc === 10; // LF bug
+    if (!containsAllEnglish) {
+        return false;
+    }
+  }
+  return true;
+};
+
 
 module.exports = {
   hexTo64,
   fixedXOR,
-  sbXOR,
+  singleByteXOR,
   detectSingleCharXOR
 };
