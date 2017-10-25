@@ -103,9 +103,29 @@ const allEnglish = str => {
   return true;
 };
 
+const repeatingKeyXOR = (text, key='ICE') => {
+  if (!text) {
+    text = `Burning 'em, if you ain't quick and nimble\n` +
+      `I go crazy when I hear a cymbal`;
+  }
+  let keyIndex = 0;
+  let store = [];
+  let b;
+  let tB = Buffer.from(text);
+  let kB = Buffer.from(key);
+  for (let i = 0; i < tB.length; i++) {
+    let xor = tB[i] ^ kB[keyIndex]
+    tB[i] = xor;
+    keyIndex++;
+    keyIndex = keyIndex > key.length - 1 ? 0 : keyIndex;
+  }
+  return tB.toString('hex');
+}
+
 module.exports = {
   hexTo64,
   fixedXOR,
   singleByteXOR,
-  detectSingleCharXOR
+  detectSingleCharXOR,
+  repeatingKeyXOR
 };
