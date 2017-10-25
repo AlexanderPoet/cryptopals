@@ -1,0 +1,1 @@
+module.exports.setOne = require('./setOne');

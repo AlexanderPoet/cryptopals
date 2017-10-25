@@ -1,5 +1,6 @@
 const buffer = require('buffer');
 const Promise = require('bluebird');
+const path = `${process.env.PWD}/resources/test.txt`; //hardcoded text location for default testing;
 const readFileAsync = Promise.promisify(require('fs').readFile);
 
 const hexTo64 = string => Buffer.from(string, 'hex').toString('base64');
@@ -79,7 +80,7 @@ const singleByteXOR = string => {
   return finalChoice || [];
 };
 
-const detectSingleCharXOR = (filepath='test.txt') => 
+const detectSingleCharXOR = (filepath=path) => 
   readFileAsync(filepath)
   .then(data =>
     data.toString()
@@ -101,7 +102,6 @@ const allEnglish = str => {
   }
   return true;
 };
-
 
 module.exports = {
   hexTo64,
