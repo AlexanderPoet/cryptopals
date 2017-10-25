@@ -122,10 +122,32 @@ const repeatingKeyXOR = (text, key='ICE') => {
   return tB.toString('hex');
 }
 
+const hammingDistance = (word1, word2) => { //there has to be a beter way to do this
+  let distance = 0;
+  for (let i = 0; i < word1.length; i++) {
+    let xor = Math.abs(word1[i].charCodeAt(0) - word2[i].charCodeAt(0))
+    while (xor > 1) {
+      let twos = 2;
+      let prev;
+      while (twos < xor) {
+        prev = twos;
+        twos *= 2;
+      }
+      distance++;
+      xor -= prev;
+      twos = 2;
+    }
+    distance = xor === 1 ? distance + 1: distance;
+  }
+  return distance;
+}
+
+
 module.exports = {
   hexTo64,
   fixedXOR,
   singleByteXOR,
   detectSingleCharXOR,
-  repeatingKeyXOR
+  repeatingKeyXOR,
+
 };
