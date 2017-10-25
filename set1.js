@@ -1,4 +1,7 @@
 const buffer = require('buffer');
+const Promise = require('bluebird');
+const readFileAsync = Promise.promisify(require('fs').readFile);
+
 const hexTo64 = string => Buffer.from(string, 'hex').toString('base64');
 
 const fixedXOR = (string) => {
@@ -17,6 +20,18 @@ const fixedXOR = (string) => {
   }
 }
 
+const finalFilterCheck = str => {
+  let containsAllEnglish = true;
+  for (let i = 0; i < str.length; i++) {
+    let cc = str[i].charCodeAt(0);
+    containsAllEnglish = (31 < cc && cc < 127) || cc === 10; // LF bug
+    if (!containsAllEnglish) {
+        return false;
+    }
+  }
+  return true;
+};
+
 const sbXOR = string => { // a single english character to be more specific
   const finalists = [];
   const mostPopular = {
@@ -32,17 +47,7 @@ const sbXOR = string => { // a single english character to be more specific
     99: 10,
     100: 11
   }
-  const finalFilterCheck = str => {
-    let containsAllEnglish = true;
-    for (let i = 0; i < str.length; i++) {
-      let cc = str[i].charCodeAt(0);
-      containsAllEnglish = (31 < cc && cc < 127) || cc === 10; // LF bug
-      if (!containsAllEnglish) {
-          return false;
-      }
-    }
-    return true;
-  };
+  
   let length;
   let _string;
   for (let code = 0; code < 257; code++) {//127
@@ -72,6 +77,7 @@ const sbXOR = string => { // a single english character to be more specific
       }
     }
   }
+
   let finalChoice;
   finalists.forEach(finalist => {
     if (!finalChoice) {
@@ -83,24 +89,22 @@ const sbXOR = string => { // a single english character to be more specific
   return finalChoice || [];
 };
 
-const fs = require('fs');
+const detectSingleCharXOR = (filepath='test.txt') => 
+  readFileAsync(filepath)
+  .then(data =>
+    data.toString()
+    .split('\n')
+    .map(sbXOR)
+    .filter(ele => ele.spaces)[0].string
+  )
+  .catch(err => console.log('Errorrrr,', err));
+;
 
-const detectSingleCharXOR = (filepath='test.txt', cb) => {
-  fs.readFile(filepath, (err, data) => {
-    if (err) {
-      console.log(err, 'ahhhhh');
-    } 
-    let secret =
-      data.toString()
-      .split('\n')
-      .map(sbXOR)
-      .filter(ele => ele.spaces)[0].string;
-    if (!cb) {
-      console.log(secret);
-      return
-    }
-    cb(secret);
-  });
-}
+detectSingleCharXOR().then(secret => console.log(secret))
 
-detectSingleCharXOR();
+module.exports = {
+  hexTo64,
+  fixedXOR,
+  sbXOR,
+  detectSingleCharXOR
+};

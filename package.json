@@ -1,0 +1,25 @@
+{
+  "name": "cryptopals",
+  "version": "1.0.0",
+  "description": "iTried",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexanderPoet/cryptopals.git"
+  },
+  "keywords": [
+    "crypto"
+  ],
+  "author": "Po",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlexanderPoet/cryptopals/issues"
+  },
+  "homepage": "https://github.com/AlexanderPoet/cryptopals#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1"
+  }
+}
