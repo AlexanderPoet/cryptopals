@@ -52,7 +52,7 @@ const singleByteXOR = (string, index, arr, repeatMode=false)=> {
         val = buf[i];
         if (val >= 65 && val <= 90) { store[val - 65]++ }
         else if (val >= 97 && val <= 122) { store[val - 97]++; }  // lowercase a-z
-        else if (val === 32) { spaces++; }
+        else if (val === 32) { spaces++; ignored++ }
         else if (val >= 32 && val <= 126) { ignored++; }      // numbers and punct.
         else if (val == 9 || val == 10 || val == 13) { ignored++; }  // TAB, CR, LF
         else { return Infinity; }
@@ -134,29 +134,30 @@ const hammingDistance = (word1, word2) => { //there has to be a beter way to do 
   return distance;
 }
 
-const breakingRKXOR = code64 => {
+const breakingRKXOR = hexBuff => {
   let poss = [];
-  for (let keySize = 2; keySize < 41; keySize++) {
+  for (let keySize = 2; keySize < hexBuff.length / 2; keySize++) { // should be less but I can't find it in any range let alone a narrow one
     let distance =
       hammingDistance(
-        hexTo64(code64.substring(0, keySize - 1)),
-        hexTo64(code64.substring(keySize, (keySize * 2) - 1))
+        hexTo64(hexBuff.substring(0, keySize - 1)),
+        hexTo64(hexBuff.substring(keySize, (keySize * 2) - 1))
       ) / keySize;
       poss.push([keySize, distance])
   }
   poss = poss.sort((a,b) => a[1] > b[1] ? 1 : -1 )
-    //.slice(0,1) // number of top keylengths to try
+    .slice(0,15) // number of top keylengths to try.... anything past 20 will get sllooowwwww
     .map(tuple => {
       const brokenUp = [];
       const k = tuple[0];
-      for (let i = 0; i < code64.length; i+=k) {
-        brokenUp.push(code64.substring(i, (i+k)));
+      for (let i = 0; i < hexBuff.length; i+=k) {
+        brokenUp.push(hexBuff.substring(i, (i+k)));
       }
       return brokenUp;
     })
     .reduce((hi, city) => {
       let size = city[0].length;
       hi[size] = hi[size] || {};
+
       for (let i = 0; i < size; i++) {
         hi[size][i] = city.map(block => block[i]).join('');
         let possible = singleByteXOR(hi[size][i], null, null, true);
@@ -167,21 +168,19 @@ const breakingRKXOR = code64 => {
       }
     return hi;
     },{});
-  let maybe = Object.keys(poss).filter(key => {
-    let x = Object.keys(poss[key]).filter(key2 =>
-       poss[key].sbxor ? true: false
-    );
-    return x.length ? true: false;
-  }).filter(k => poss[k].sbxor.length === poss[k]).map(k => poss[k]);
-  return maybe;
+
+  return Object.keys(poss)
+    .filter(possKey => poss[possKey].sbxor)
+    .filter(e => Object.keys(poss[e].sbxor).length === e)
+    .map(e => poss[e]);
+
 }
+
 let A = readFileAsync(breakThis).then(success => {
   let boo = Buffer.from(success.toString(), 'base64').toString('hex');
-  let B = breakingRKXOR(boo);
-  console.log(B)
+  //let B = breakingRKXOR(boo);
+  //console.log(B)
 }).catch(e => console.log(e))
-
-
 
 module.exports = {
   hexTo64,
