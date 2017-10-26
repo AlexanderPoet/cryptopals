@@ -18,7 +18,7 @@ const fixedXOR = string => {
   }
 }
 
-const singleByteXOR = string => {
+const singleByteXOR = (string, index, arr, repeatMode=false)=> {
   const english_freq = [
     0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,  // A-G
     0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749,  // H-N
@@ -66,7 +66,12 @@ const singleByteXOR = string => {
           let difference = observed - expected;
           chiSq += difference*difference / expected;
       }
+
+      if (repeatMode) {
+        return chiSq;
+      } else {
         return spaces ? chiSq : Infinity;
+      }
     };
 
     let chi = score(buf);
@@ -139,37 +144,42 @@ const breakingRKXOR = code64 => {
       ) / keySize;
       poss.push([keySize, distance])
   }
-  let hi = {};
-  return poss.sort((a,b) => a[1] > b[1] ? 1 : -1 )
-    .slice(0,3) // number of top keylengths to try
+  poss = poss.sort((a,b) => a[1] > b[1] ? 1 : -1 )
+    //.slice(0,1) // number of top keylengths to try
     .map(tuple => {
-    const brokenUp = [];
-    const k = tuple[0];
-    for (let i = 0; i < code64.length; i+=k) {
-      brokenUp.push(code64.substring(i, (i+k)));
-    }
-    return brokenUp;
-  }).reduce((hi, city) => {
-    let size = city[0].length;
-    hi[size] = hi[size] || {};
-    for (let i = 0; i < size; i++) {
-      hi[size][i] = city.map(block => block[i]).join('');
-      hi[size].sbxor = hi[size].sbxor || {};
-      hi[size].sbxor[i] = singleByteXOR(hi[size][i], null, null, true);
-    }
+      const brokenUp = [];
+      const k = tuple[0];
+      for (let i = 0; i < code64.length; i+=k) {
+        brokenUp.push(code64.substring(i, (i+k)));
+      }
+      return brokenUp;
+    })
+    .reduce((hi, city) => {
+      let size = city[0].length;
+      hi[size] = hi[size] || {};
+      for (let i = 0; i < size; i++) {
+        hi[size][i] = city.map(block => block[i]).join('');
+        let possible = singleByteXOR(hi[size][i], null, null, true);
+        if (possible) {
+          hi[size].sbxor = hi[size].sbxor || {};
+          hi[size].sbxor[i] = possible;
+        }
+      }
     return hi;
-  },{});
+    },{});
+  let maybe = Object.keys(poss).filter(key => {
+    let x = Object.keys(poss[key]).filter(key2 =>
+       poss[key].sbxor ? true: false
+    );
+    return x.length ? true: false;
+  }).filter(k => poss[k].sbxor.length === poss[k]).map(k => poss[k]);
+  return maybe;
 }
-// let A = readFileAsync(breakThis).then(success => {
-//   let boo = Buffer.from(success.toString(), 'base64').toString('hex');
-//   let B = breakingRKXOR(boo);
-//   Object.keys(B).forEach(x => {
-//     let D = '';
-//     Object.keys(B[x].sbxor).forEach(y => D+=B[x].sbxor[y].char);
-//     console.log(repeatingKeyXOR(boo, D))
-//     //console.log(Buffer.from(repeatingKeyXOR(boo, D), 'hex').toString('ascii'))
-//   });
-// }).catch(e => console.log(e))
+let A = readFileAsync(breakThis).then(success => {
+  let boo = Buffer.from(success.toString(), 'base64').toString('hex');
+  let B = breakingRKXOR(boo);
+  console.log(B)
+}).catch(e => console.log(e))
 
 
 
