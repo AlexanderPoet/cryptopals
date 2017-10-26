@@ -36,7 +36,8 @@ test('fixedXOR can compare multiple buffers to same target with subsequent calls
 
 test('singleByteXOR will find the key and decrypt example string', () => {
   let attempt = setOne.singleByteXOR(singleX);
-  expect(attempt).toHaveProperty('char', 'X');
+  expect(attempt.string).toBe(wu)
+  expect(attempt).toHaveProperty('encodingChar', 88);
   expect(attempt).toHaveProperty('string', wu);
 });
 
@@ -48,9 +49,9 @@ test('singleByteXOR can be used as mapping function', () => {
 
 test('detectSingleCharXOR detects the secret in built in text', () => {
   setOne.detectSingleCharXOR()
-  .then(success => 
+  .then(success =>
     expect(success.string).toBe('Now that the party is jumping\n')
-  )
+  );
 });
 
 test('detectSingleCharXOR detects a secret in supplied filepath', () => {
